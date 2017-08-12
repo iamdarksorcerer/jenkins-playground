@@ -11,7 +11,7 @@ buildscript {
 	}
 }
 
-import org.ajoberstar.grgit.*
+import org.ajoberstar.grgit.Grgit
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
@@ -19,9 +19,13 @@ apply plugin: 'org.springframework.boot'
 
 ext {
     git = Grgit.open(project.file('../.'))
-    revision = git.head().id
-    commitTime = git.head().date.format('yyyy-MM-dd HH:mm:ss z', TimeZone.getTimeZone('GMT'))
-    buildTime = new Date().format('yyyy-MM-dd HH:mm:ss z', TimeZone.getTimeZone('GMT'))
+    timeZone = TimeZone.getTimeZone('GMT')
+    timeFormat = 'yyyy/MM/dd HH:mm:ss z'
+
+    buildTime = new Date().format(timeFormat, timeZone)
+    commitId = git.head().id
+    commitTime = git.head().date.format(timeFormat, timeZone)
+    dirty = !git.status().clean ? "yes" : "no"
 }
 
 
@@ -36,19 +40,15 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-actuator')
 	compile('org.springframework.boot:spring-boot-starter-data-redis')
 	compile('org.springframework.boot:spring-boot-starter-web')
+
 	runtime('org.springframework.boot:spring-boot-devtools')
-	compileOnly('org.projectlombok:lombok')
+
+    compileOnly('org.projectlombok:lombok')
+
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
 
 processResources {
+    from("src/main/templates")
     expand(project.properties)
 }
-
-'''
-application.version=${version}
-application.revision=${revision}
-
-build.time=${buildTime}
-commit.time=${commitTime}
-'''
